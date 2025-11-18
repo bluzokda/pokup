@@ -1,0 +1,6 @@
+aiogram==3.13.1
+requests
+beautifulsoup4
+lxml
+python-dotenv
+sqlite3
