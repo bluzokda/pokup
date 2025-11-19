@@ -11,9 +11,8 @@ from db import log_deal, init_db, get_stats, set_user_category, get_user_categor
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 dp = Dispatcher()
 
-# Убираем глобальные словари
-# monitoring_active = {}
-# user_categories = {}
+# Глобальный словарь для мониторинга (временный)
+monitoring_active = {}
 
 def get_main_keyboard():
     keyboard = types.InlineKeyboardMarkup(inline_keyboard=[
@@ -64,7 +63,6 @@ async def cb_start_monitoring(callback_query: types.CallbackQuery):
         await callback_query.answer("Сначала выбери категорию!", show_alert=True)
         return
 
-    # Проверим, запущен ли мониторинг (можно хранить в памяти, но не в БД)
     if monitoring_active.get(user_id):
         await callback_query.answer("Мониторинг уже запущен!", show_alert=True)
         return
@@ -86,8 +84,7 @@ async def cb_stop_monitoring(callback_query: types.CallbackQuery):
 
 @dp.callback_query(lambda c: c.data == "stats")
 async def cb_stats(callback_query: types.CallbackQuery):
-    stats = get_stats()
-    total_deals, total_profit = stats
+    total_deals, total_profit = get_stats()
     await callback_query.answer(
         f"📊 Статистика:\n"
         f"Всего сделок: {total_deals}\n"
@@ -106,7 +103,7 @@ async def cb_select_category(callback_query: types.CallbackQuery):
 async def cb_category_selected(callback_query: types.CallbackQuery):
     user_id = callback_query.from_user.id
     category_key = callback_query.data.split("_")[1]
-    set_user_category(user_id, category_key)  # Сохраняем в БД
+    set_user_category(user_id, category_key)
     await callback_query.answer(f"Категория установлена: {CATEGORIES[category_key]}")
     await callback_query.message.edit_text(
         f"✅ Категория установлена: {CATEGORIES[category_key]}\n"
@@ -121,32 +118,36 @@ async def cb_cancel_category(callback_query: types.CallbackQuery):
         reply_markup=get_main_keyboard()
     )
 
-# Глобальный словарь для мониторинга (временный, при перезапуске сбросится)
-monitoring_active = {}
-
 async def monitor_loop(user_id):
     while monitoring_active.get(user_id, False):
-        category = get_user_category(user_id)
-        if not category:
-            monitoring_active[user_id] = False
-            break
+        try:
+            category = get_user_category(user_id)
+            if not category:
+                monitoring_active[user_id] = False
+                break
 
-        fp_items = get_funpay_items(category=category)
-        for fp_item in fp_items:
-            po_items = get_playerok_items(fp_item["name"])
-            po_item = find_best_match(fp_item, po_items)
-            if po_item:
-                profit = po_item["price"] - fp_item["price"]
-                if profit > ARBITRAGE_THRESHOLD:
-                    await bot.send_message(
-                        user_id,
-                        f"🔍 Найдена арбитражная сделка:\n"
-                        f"🛒 Купить на FunPay: {fp_item['name']} за {fp_item['price']}₽\n"
-                        f"💰 Продать на PlayerOK: за {po_item['price']}₽\n"
-                        f"📈 Прибыль: {profit:.2f}₽\n"
-                        f"🔗 Ссылки:\n- FunPay: [ссылка]\n- PlayerOK: [ссылка]"
-                    )
-                    log_deal(fp_item["name"], fp_item["price"], po_item["price"], profit)
+            fp_items = get_funpay_items(category=category)
+            for fp_item in fp_items:
+                po_items = get_playerok_items(fp_item["name"])
+                po_item = find_best_match(fp_item, po_items)
+                if po_item:
+                    profit = po_item["price"] - fp_item["price"]
+                    if profit > ARBITRAGE_THRESHOLD:
+                        fp_link = f"https://funpay.com/lots/{fp_item['id']}/" if fp_item.get("id") else "#"
+                        po_link = f"https://playerok.com/item/{po_item['id']}/" if po_item.get("id") else "#"
+                        await bot.send_message(
+                            user_id,
+                            f"🔍 Найдена арбитражная сделка:\n"
+                            f"🛒 Купить на FunPay: [{fp_item['name']}]({fp_link}) за {fp_item['price']}₽\n"
+                            f"💰 Продать на PlayerOK: за {po_item['price']}₽\n"
+                            f"📈 Прибыль: {profit:.2f}₽\n"
+                            f"🔗 Ссылки:\n- [FunPay]({fp_link})\n- [PlayerOK]({po_link})",
+                            parse_mode="Markdown"
+                        )
+                        log_deal(fp_item["name"], fp_item["price"], po_item["price"], profit)
+        except Exception as e:
+            print(f"Ошибка в мониторинге для {user_id}: {e}")
+            # Здесь можно отправить сообщение админу или в лог-чат
         await asyncio.sleep(random.randint(50, 70))
 
 async def main():
