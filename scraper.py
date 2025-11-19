@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 
-def get_funpay_items(category="csgo", limit=50):
+def get_funpay_items(category="csgo", limit=1):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         # "Cookie": "sessionid=your_sessionid; csrftoken=your_csrftoken"  # Можно убрать, если не нужна авторизация
