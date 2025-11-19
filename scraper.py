@@ -7,11 +7,20 @@ def get_funpay_items(category="csgo", limit=50):
         # "Cookie": "sessionid=your_sessionid; csrftoken=your_csrftoken"  # Можно убрать, если не нужна авторизация
     }
 
-    # Если категория "roblox" — делаем поиск по слову "Roblox"
-    if category == "roblox":
-        url = "https://funpay.ru/search?query=Roblox"
-    else:
-        url = f"https://funpay.ru/lots/{category}"
+    # Словарь с правильными URL для категорий
+    category_urls = {
+        "csgo": "https://funpay.ru/lots/csgo",
+        "dota2": "https://funpay.ru/lots/dota2",
+        "rust": "https://funpay.ru/lots/rust",
+        "cs2": "https://funpay.ru/lots/cs2",
+        "roblox": "https://funpay.ru/chips/99/"  # Правильная ссылка для Roblox
+    }
+
+    url = category_urls.get(category)
+
+    if not url:
+        print(f"Неизвестная категория: {category}")
+        return []
 
     response = requests.get(url, headers=headers)
     if response.status_code != 200:
@@ -20,7 +29,7 @@ def get_funpay_items(category="csgo", limit=50):
 
     soup = BeautifulSoup(response.text, "lxml")
     items = []
-    for item in soup.select(".lot-card"):
+    for item in soup.select(".lot-card"):  # Убедись, что селектор правильный
         name = item.select_one(".title a")
         price = item.select_one(".price")
         if not name or not price:
