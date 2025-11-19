@@ -27,3 +27,13 @@ def log_deal(item_name, fp_price, po_price, profit):
     """, (item_name, fp_price, po_price, profit))
     conn.commit()
     conn.close()
+
+def get_stats():
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("SELECT COUNT(*), SUM(profit) FROM deals")
+    row = c.fetchone()
+    conn.close()
+    total_deals = row[0] or 0
+    total_profit = row[1] or 0.0
+    return total_deals, total_profit
