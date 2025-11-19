@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 
-def get_funpay_items(category="csgo", limit=1):
+def get_funpay_items(category="csgo", limit=50):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         # "Cookie": "sessionid=your_sessionid; csrftoken=your_csrftoken"  # Можно убрать, если не нужна авторизация
@@ -9,11 +9,11 @@ def get_funpay_items(category="csgo", limit=1):
 
     # Словарь с правильными URL для категорий
     category_urls = {
-        "csgo": "https://funpay.ru/lots/csgo",
-        "dota2": "https://funpay.ru/lots/dota2",
-        "rust": "https://funpay.ru/lots/rust",
-        "cs2": "https://funpay.ru/lots/cs2",
-        "roblox": "https://funpay.ru/chips/99/"  # Правильная ссылка для Roblox
+        "csgo": "https://funpay.com/lots/csgo",
+        "dota2": "https://funpay.com/lots/dota2",
+        "rust": "https://funpay.com/lots/rust",
+        "cs2": "https://funpay.com/lots/cs2",
+        "roblox": "https://funpay.com/chips/99/"  # Правильная ссылка для Roblox (с .com)
     }
 
     url = category_urls.get(category)
