@@ -29,7 +29,8 @@ def get_playerok_items(item_name):
 
         result = response.json()
         items = result.get("data", {}).get("items", [])
-        return [{"name": item["name"], "price": float(item["price"])} for item in items]
+        # Возвращаем список словарей с id, name, price
+        return [{"id": item["id"], "name": item["name"], "price": float(item["price"])} for item in items]
     except Exception as e:
         print(f"Ошибка при запросе к PlayerOK: {e}")
         return []
