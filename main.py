@@ -1,13 +1,13 @@
 import asyncio
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
-from config import BOT_TOKEN, ARBITRAGE_THRESHOLD
+from config import TELEGRAM_BOT_TOKEN, ARBITRAGE_THRESHOLD
 from scraper import get_funpay_items
 from playerok_api import get_playerok_items
 from matcher import find_best_match
 from db import log_deal, init_db
 
-bot = Bot(token=BOT_TOKEN)
+bot = Bot(token=TELEGRAM_BOT_TOKEN)
 dp = Dispatcher()
 
 monitoring_active = False
