@@ -15,6 +15,13 @@ def init_db():
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     """)
+    # Новая таблица для категорий
+    c.execute("""
+        CREATE TABLE IF NOT EXISTS user_categories (
+            user_id INTEGER PRIMARY KEY,
+            category TEXT
+        )
+    """)
     conn.commit()
     conn.close()
 
@@ -37,3 +44,21 @@ def get_stats():
     total_deals = row[0] or 0
     total_profit = row[1] or 0.0
     return total_deals, total_profit
+
+def set_user_category(user_id, category):
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("""
+        INSERT OR REPLACE INTO user_categories (user_id, category)
+        VALUES (?, ?)
+    """, (user_id, category))
+    conn.commit()
+    conn.close()
+
+def get_user_category(user_id):
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("SELECT category FROM user_categories WHERE user_id = ?", (user_id,))
+    row = c.fetchone()
+    conn.close()
+    return row[0] if row else None
